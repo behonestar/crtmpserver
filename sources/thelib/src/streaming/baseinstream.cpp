@@ -17,7 +17,8 @@
  *  along with crtmpserver.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
+#include <ctime>
+#include <sys/stat.h>
 #include "streaming/baseinstream.h"
 #include "streaming/baseoutstream.h"
 #include "streaming/streamstypes.h"

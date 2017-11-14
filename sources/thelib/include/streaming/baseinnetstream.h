@@ -22,13 +22,31 @@
 #define	_BASEINNETSTREAM_H
 
 #include "streaming/baseinstream.h"
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+
+#define MSG_BUF_LEN 128
+#define MSG_KEY 0x7654
+
+typedef struct {
+	long mtype;
+	char mbuf[MSG_BUF_LEN];
+} Msg;
 
 class DLLEXP BaseInNetStream
 : public BaseInStream {
+private:
+	time_t _expirationTimestamp;
+	time_t _lastReportTimestamp;
+	int _reportMsgqId;
 public:
 	BaseInNetStream(BaseProtocol *pProtocol, StreamsManager *pStreamsManager,
 			uint64_t type, string name);
 	virtual ~BaseInNetStream();
+
+	uint32_t RedisReport(bool);
+	bool IsExpired();
 };
 
 #endif	/* _BASEINNETSTREAM_H */

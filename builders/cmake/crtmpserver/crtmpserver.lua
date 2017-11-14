@@ -84,11 +84,6 @@ configuration=
 			{
 				{
 					ip="0.0.0.0",
-					port=1935,
-					protocol="inboundRtmp"
-				},
-				{
-					ip="0.0.0.0",
 					port=8081,
 					protocol="inboundRtmps",
 					sslKey="server.key",
@@ -117,6 +112,11 @@ configuration=
 			},
 			acceptors = 
 			{
+                                {
+                                        ip="0.0.0.0",
+                                        port=1935,
+                                        protocol="inboundRtmp"
+                                },
 				{
 					ip="0.0.0.0",
 					port=6666,

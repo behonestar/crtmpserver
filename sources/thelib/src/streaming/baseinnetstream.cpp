@@ -28,8 +28,39 @@ BaseInNetStream::BaseInNetStream(BaseProtocol *pProtocol,
 		ASSERT("Incorrect stream type. Wanted a stream type in class %s and got %s",
 				STR(tagToString(ST_IN_NET)), STR(tagToString(type)));
 	}
+
+	_reportMsgqId = msgget(MSG_KEY, IPC_CREAT|0666);
+	_lastReportTimestamp = 0;
+	_expirationTimestamp = time(0) + 60;
 }
 
 BaseInNetStream::~BaseInNetStream() {
+}
+
+uint32_t BaseInNetStream::RedisReport(bool set) {
+	time_t currentTimestamp = time(0);
+	if (currentTimestamp - _lastReportTimestamp < 10) {
+		//INFO("[%s] diff: %ld", STR(_name), currentTimestamp - _lastReportTimestamp);
+		return 0;
+	}
+	_lastReportTimestamp = currentTimestamp;
+
+	INFO("[%s] set: %d", STR(_name), set);
+	Msg msg;
+	memset(&msg, 0, sizeof(msg));
+	msg.mtype = set ? 1 : 2;
+	snprintf(msg.mbuf, MSG_BUF_LEN, "%s", STR(_name));
+	return msgsnd(_reportMsgqId, &msg, sizeof(msg), IPC_NOWAIT);
+}
+
+bool BaseInNetStream::IsExpired() {
+	time_t currentTimestamp = time(0);
+
+	if (currentTimestamp >= _expirationTimestamp) {
+		if (GetOutStreams().size() == 0)
+		  return true;
+		_expirationTimestamp = currentTimestamp + 60;
+	}
+	return false;
 }
 

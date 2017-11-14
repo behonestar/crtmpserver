@@ -263,6 +263,12 @@ bool InboundTSProtocol::ProcessPacket(uint32_t packetHeader,
 		return true;
 	}
 
+	if (TS_TRANSPORT_PACKET_PID(packetHeader) == 0x3f) {
+		char *streamName = (char *)(pBuffer+4);
+		GetCustomParameters()["localStreamName"] = string(streamName);
+		return true;
+	}
+
 	switch (pPIDDescriptor->type) {
 		case PID_TYPE_PAT:
 		{
@@ -282,6 +288,14 @@ bool InboundTSProtocol::ProcessPacket(uint32_t packetHeader,
 		}
 		case PID_TYPE_VIDEOSTREAM:
 		{
+			InNetTSStream *pStream = (InNetTSStream *)pPIDDescriptor->payload.pStream;
+			if (pStream->IsExpired()) {
+				WARN("Stream `%s` Expired", STR(pStream->GetName()));
+				pStream->RedisReport(false);
+				return false;
+			}
+			pStream->RedisReport(true);
+
 			return pPIDDescriptor->payload.pStream->FeedData(pBuffer + cursor,
 					_chunkSize - cursor,
 					TS_TRANSPORT_PACKET_IS_PAYLOAD_START(packetHeader), false,

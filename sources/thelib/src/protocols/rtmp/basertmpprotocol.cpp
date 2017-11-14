@@ -892,6 +892,11 @@ bool BaseRTMPProtocol::ProcessBytes(IOBuffer &buffer) {
 					}
 					if ((_streams[H_SI(header)] != NULL)
 							&& (_streams[H_SI(header)]->GetType() == ST_IN_NET_RTMP)) {
+						InNetRTMPStream *pStream = (InNetRTMPStream *)_streams[H_SI(header)];
+						if (pStream->IsExpired()) {
+							WARN("stream expired!");
+							return false;
+						}
 						if (!((InNetRTMPStream *) _streams[H_SI(header)])->FeedData(
 								GETIBPOINTER(buffer), //pData,
 								tempSize, //dataLength,

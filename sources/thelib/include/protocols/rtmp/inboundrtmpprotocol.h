@@ -32,6 +32,7 @@ private:
 	uint8_t *_pOutputBuffer;
 	uint32_t _currentFPVersion;
 	uint8_t _handshakeScheme;
+	time_t _createdTimestamp;
 public:
 	InboundRTMPProtocol();
 	virtual ~InboundRTMPProtocol();

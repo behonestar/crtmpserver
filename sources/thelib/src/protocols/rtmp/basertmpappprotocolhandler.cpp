@@ -1079,6 +1079,7 @@ bool BaseRTMPAppProtocolHandler::ProcessInvokePlay(BaseRTMPProtocol *pFrom,
 	//6. bind the network outbound stream to the inbound stream
 	//depending on the type of the outbound stream
 	switch ((int32_t) startTime) {
+		case 0:
 		case -2: //live or recorded
 		{
 			bool linked = false;

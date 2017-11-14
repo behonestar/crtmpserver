@@ -35,6 +35,86 @@ RTMPAppProtocolHandler::RTMPAppProtocolHandler(Variant &configuration)
 RTMPAppProtocolHandler::~RTMPAppProtocolHandler() {
 }
 
+string RTMPAppProtocolHandler::CreateToken(string streamName, string expiration) {
+	uint8_t hashHex[32] = {0};
+	char hashStr[128] = {0};
+	unsigned int i = 0;
+
+	string plain = streamName + ":" + expiration;
+	string key = "Sequrinet#GetStreamUri#HashKey";
+	HMACsha256(STR(plain), (uint32_t) plain.length(), STR(key), (uint32_t) key.length(), hashHex);
+
+	//hex to string
+	for (i = 0; i < sizeof(hashHex); i++)
+		sprintf(hashStr + i*2, "%02x", hashHex[i]);
+	hashStr[i*2] = 0;
+
+	return string(hashStr);
+}
+
+bool RTMPAppProtocolHandler::ProcessInvokePlay(BaseRTMPProtocol *pFrom,
+								Variant & request) {
+
+	string streamName = M_INVOKE_PARAM(request, 1);
+	trim(streamName);
+	if (streamName == "") {
+		FATAL("Invalid request:\n%s", STR(request.ToString()));
+		return false;
+	}
+	streamName = GetApplication()->GetStreamNameByAlias(streamName, true);
+	if (streamName == "") {
+		FATAL("No stream alias found:\n%s", STR(request.ToString()));
+		return false;
+	}
+
+	//auth check
+	{
+		//parse
+		char strStreamName[64] = {0};
+		char strToken[128] = {0};
+		char strExpiration[64] = {0};
+		const char *pStr = NULL;
+
+		//parse
+		sscanf(STR(streamName), "%63[^?]", strStreamName);
+
+		pStr = strstr(STR(streamName), "token=");
+		if (pStr)
+			sscanf(pStr, "token=%127[^&|^?]", strToken);
+
+		pStr = strstr(STR(streamName), "expiration=");
+		if (pStr)
+			sscanf(pStr, "expiration=%63[^&|^?]", strExpiration);
+
+		streamName = strStreamName;
+
+	//validation - timestamp
+		if (!strToken[0] || !strExpiration[0]) {
+			FATAL("Auth Failed. Invalid Parameter. token[%s] expiration[%s]", strToken, strExpiration);
+			return false;
+		}
+
+		if (time(NULL) > atoi(strExpiration)) {
+			FATAL("Auth Failed. Token Expired. now[%d] expiration[%d]", (int)time(NULL), atoi(strExpiration));
+			return false;
+		}
+
+
+		//validation - token
+		string tokenWant = CreateToken(streamName, string(strExpiration));
+		if (string(strToken) != tokenWant) {
+			FATAL("Auth Failed. Token Invalid. token[%s] tokenWant[%s]", strToken, STR(tokenWant));
+			return false;
+		}
+
+
+		//update streamName
+		request[RM_INVOKE][RM_INVOKE_PARAMS][1] = streamName;
+	}
+
+	return BaseRTMPAppProtocolHandler::ProcessInvokePlay(pFrom, request);
+}
+
 bool RTMPAppProtocolHandler::ProcessInvokeGeneric(BaseRTMPProtocol *pFrom,
 		Variant &request) {
 

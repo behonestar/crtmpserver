@@ -60,6 +60,8 @@ public:
 	 */
 	void UnRegisterStream(BaseStream *pStream);
 
+	uint32_t GetStreamCountByName(string name);
+
 	/*!
 		@brief Erases the stream to the streams manager using the protocol ID.
 		@param protocolId
