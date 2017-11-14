@@ -198,11 +198,13 @@ bool InNetTSStream::FeedData(uint8_t *pData, uint32_t length, bool packetStart,
 				dbg += format("final: %09"PRIx64"; ", value);
 #endif /* __DUMP_TIMESTAMP_INFO_FOR_DEBUG */
 				double tempPtsTime = (double) value / 90.00;
+				/*
 				if (ptsTime > tempPtsTime) {
 					WARN("Back time");
 					DROP_PACKET;
 					return true;
 				}
+				*/
 #ifdef __DUMP_TIMESTAMP_INFO_FOR_DEBUG
 				dbg += format("diff: %.2f", tempPtsTime - ptsTime);
 				FINEST("%s", STR(dbg));
